@@ -1,0 +1,59 @@
+name: 'Changelog Publish to Google Docs'
+description: 'Appends or syncs a markdown changelog to a Google Doc using the Docs API v1 with idempotency support'
+author: 'Marco Jardim'
+
+branding:
+  icon: 'file-text'
+  color: 'blue'
+
+inputs:
+  report_path:
+    description: 'Path to the markdown report file (e.g. executive-changelog.md from changelog-render-action)'
+    required: true
+
+  document_id:
+    description: 'Google Doc ID extracted from the document URL (the long string between /d/ and /edit)'
+    required: true
+
+  service_account_key:
+    description: 'Base64-encoded Google Service Account JSON key with Docs API access'
+    required: true
+
+  idempotency_key:
+    description: 'Optional string to deduplicate entries (e.g. repo:from_sha:to_sha). If already present in the doc, the action is skipped.'
+    required: false
+    default: ''
+
+  insights_path:
+    description: 'Optional path to insights.v1.json for richer metadata enrichment'
+    required: false
+    default: ''
+
+  mode:
+    description: 'How to insert content: "append" (end of doc), "prepend" (beginning of doc), or "replace_section" (replace by header)'
+    required: false
+    default: 'append'
+
+  section_header:
+    description: 'The header text to find and replace when mode is "replace_section"'
+    required: false
+    default: ''
+
+  dry_run:
+    description: 'If "true", log what would be written without calling the Google Docs API'
+    required: false
+    default: 'false'
+
+outputs:
+  document_url:
+    description: 'Full URL to the Google Doc'
+
+  action_taken:
+    description: 'Result of the action: "appended", "prepended", "replaced", "skipped", "dry_run", or "error"'
+
+  idempotency_hit:
+    description: '"true" if the entry was skipped because the idempotency_key was already found in the document'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
