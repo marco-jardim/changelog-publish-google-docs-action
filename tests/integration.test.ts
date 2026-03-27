@@ -4,24 +4,25 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { vi, type Mock, type Mocked } from 'vitest';
 
 // We'll test the run() function with all external calls mocked
 
 // Mock @actions/core
-jest.mock('@actions/core', () => ({
-  getInput: jest.fn(),
-  setOutput: jest.fn(),
-  setFailed: jest.fn(),
-  info: jest.fn(),
-  debug: jest.fn(),
-  warning: jest.fn(),
-  error: jest.fn(),
+vi.mock('@actions/core', () => ({
+  getInput: vi.fn(),
+  setOutput: vi.fn(),
+  setFailed: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn(),
+  warning: vi.fn(),
+  error: vi.fn(),
 }));
 
 // Mock googleapis
-jest.mock('googleapis', () => {
-  const mockBatchUpdate = jest.fn().mockResolvedValue({});
-  const mockGet = jest.fn().mockResolvedValue({
+vi.mock('googleapis', () => {
+  const mockBatchUpdate = vi.fn().mockResolvedValue({});
+  const mockGet = vi.fn().mockResolvedValue({
     data: {
       body: {
         content: [
@@ -40,11 +41,11 @@ jest.mock('googleapis', () => {
   return {
     google: {
       auth: {
-        GoogleAuth: jest.fn().mockImplementation(() => ({
-          getClient: jest.fn().mockResolvedValue({}),
-        })),
+        GoogleAuth: vi.fn().mockImplementation(function () {
+          return { getClient: vi.fn().mockResolvedValue({}) };
+        }),
       },
-      docs: jest.fn().mockReturnValue({
+      docs: vi.fn().mockReturnValue({
         documents: {
           get: mockGet,
           batchUpdate: mockBatchUpdate,
@@ -57,7 +58,7 @@ jest.mock('googleapis', () => {
 import * as core from '@actions/core';
 import { run } from '../src/index';
 
-const mockCore = core as jest.Mocked<typeof core>;
+const mockCore = core as Mocked<typeof core>;
 
 function makeValidServiceAccountKey(): string {
   const creds = {
@@ -86,7 +87,7 @@ describe('Integration - Action run()', () => {
   let tempMdPath: string;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     tempMdPath = createTempMarkdownFile('# Test Changelog\n\n- Feature A\n- Bug fix B\n');
 
     // Default inputs
@@ -142,9 +143,9 @@ describe('Integration - Action run()', () => {
 
     // Mock document with the idempotency key already present
     const { google } = await import('googleapis');
-    (google.docs as jest.Mock).mockReturnValue({
+    (google.docs as Mock).mockReturnValue({
       documents: {
-        get: jest.fn().mockResolvedValue({
+        get: vi.fn().mockResolvedValue({
           data: {
             body: {
               content: [
@@ -161,7 +162,7 @@ describe('Integration - Action run()', () => {
             },
           },
         }),
-        batchUpdate: jest.fn().mockResolvedValue({}),
+        batchUpdate: vi.fn().mockResolvedValue({}),
       },
     });
 

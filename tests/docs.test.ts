@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0
 
+import { vi } from 'vitest';
 import {
   getAppendIndex,
   getPrependIndex,
@@ -100,7 +101,7 @@ describe('Docs - executeBatchUpdate (mocked)', () => {
     // Mock the docsClient
     const mockDocsClient = {
       documents: {
-        batchUpdate: jest.fn().mockRejectedValue(mockError),
+        batchUpdate: vi.fn().mockRejectedValue(mockError),
       },
     };
 
@@ -120,7 +121,7 @@ describe('Docs - executeBatchUpdate (mocked)', () => {
 
     const mockDocsClient = {
       documents: {
-        batchUpdate: jest.fn().mockRejectedValue(mockError),
+        batchUpdate: vi.fn().mockRejectedValue(mockError),
       },
     };
 
@@ -138,7 +139,7 @@ describe('Docs - executeBatchUpdate (mocked)', () => {
   it('should not call API when requests array is empty', async () => {
     const mockDocsClient = {
       documents: {
-        batchUpdate: jest.fn(),
+        batchUpdate: vi.fn(),
       },
     };
 
