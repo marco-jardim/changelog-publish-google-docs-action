@@ -12,7 +12,7 @@ A task or feature is considered **done** when ALL of the following are true:
 
 ## Testing
 
-- [ ] All 69+ Jest tests pass (`npm test`)
+- [ ] All 69+ Vitest tests pass (`npm test`)
 - [ ] New code has corresponding test coverage
 - [ ] Integration tests cover the new code path
 - [ ] Tests use mocks for all external API calls (Google Docs, filesystem where appropriate)

@@ -349,8 +349,7 @@ npm run build     # Build dist/index.js
 ### Testing
 
 ```bash
-npm test               # All tests (69 tests across 5 suites)
-npm run test:coverage  # With coverage report
+npm test               # All tests with coverage (69 tests across 5 suites)
 npm run typecheck      # TypeScript type checking only
 ```
 

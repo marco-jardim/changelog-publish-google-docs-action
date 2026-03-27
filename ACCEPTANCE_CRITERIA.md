@@ -89,7 +89,7 @@
 
 ## AC-12: Tests
 
-- [ ] At least 12 Jest tests covering all major paths
+- [ ] At least 12 Vitest tests covering all major paths
 - [ ] Auth tests: base64 decode, validation, URL building
 - [ ] Idempotency tests: key found, key not found, empty key
 - [ ] Markdown tests: all element types, bold ranges, batch requests

@@ -1,5 +1,9 @@
 node_modules/
 # dist/ is intentionally NOT ignored — dist/index.js must be committed for GitHub Actions runner
+# Only dist/index.js is tracked; type declarations and sourcemaps are build artifacts
+dist/*.d.ts
+dist/*.d.ts.map
+dist/licenses.txt
 coverage/
 *.js.map
 .env

@@ -120,6 +120,7 @@ export async function run(): Promise<ActionOutputs> {
   try {
     // 1. Read inputs
     const inputs = readInputs();
+    core.setSecret(inputs.serviceAccountKey);
 
     // 2. Validate document ID
     validateDocumentId(inputs.documentId);
