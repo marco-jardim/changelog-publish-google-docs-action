@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts -o dist --license licenses.txt",
-    "test": "jest --forceExit",
+    "test": "jest --coverage --forceExit",
     "test:coverage": "jest --coverage --forceExit",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tests --ext .ts",

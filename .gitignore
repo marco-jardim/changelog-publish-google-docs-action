@@ -1,5 +1,5 @@
 node_modules/
-dist/
+# dist/ is intentionally NOT ignored — dist/index.js must be committed for GitHub Actions runner
 coverage/
 *.js.map
 .env
