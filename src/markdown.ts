@@ -167,6 +167,21 @@ export function segmentsToBatchRequests(
       });
       currentIndex += text.length;
       totalCharsInserted += text.length;
+      // Minimise the height of the blank line paragraph
+      requests.push({
+        updateParagraphStyle: {
+          range: {
+            startIndex: currentIndex - 1,
+            endIndex: currentIndex,
+          },
+          paragraphStyle: {
+            spaceAbove: { magnitude: 0, unit: 'PT' },
+            spaceBelow: { magnitude: 0, unit: 'PT' },
+            lineSpacing: 100,
+          },
+          fields: 'spaceAbove,spaceBelow,lineSpacing',
+        },
+      });
       continue;
     }
 
@@ -193,7 +208,9 @@ export function segmentsToBatchRequests(
       },
     });
 
-    // Always reset to NORMAL_TEXT so heading named styles don't produce enormous fonts
+    // Always reset to NORMAL_TEXT so heading named styles don't produce enormous fonts.
+    // Apply compact spacing: headings get a small gap above; all other segments use 0 above.
+    const isHeading = ['heading1', 'heading2', 'heading3', 'heading4'].includes(segment.type);
     requests.push({
       updateParagraphStyle: {
         range: {
@@ -202,8 +219,11 @@ export function segmentsToBatchRequests(
         },
         paragraphStyle: {
           namedStyleType: 'NORMAL_TEXT',
+          spaceAbove: { magnitude: isHeading ? 8 : 0, unit: 'PT' },
+          spaceBelow: { magnitude: 2, unit: 'PT' },
+          lineSpacing: 115,
         },
-        fields: 'namedStyleType',
+        fields: 'namedStyleType,spaceAbove,spaceBelow,lineSpacing',
       },
     });
 

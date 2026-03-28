@@ -107,6 +107,7 @@ export interface ParagraphStyle {
   namedStyleType?: string;
   spaceAbove?: { magnitude: number; unit: string };
   spaceBelow?: { magnitude: number; unit: string };
+  lineSpacing?: number;
 }
 
 export interface TextStyle {

@@ -165,6 +165,43 @@ describe('Markdown - segmentsToBatchRequests', () => {
     expect(normalStyle).toBeDefined();
   });
 
+  it('should apply compact spacing (lineSpacing 115, spaceBelow 2) to all non-blank segments', () => {
+    const segments = parseMarkdown('Some paragraph text');
+    const { requests } = segmentsToBatchRequests(segments, 1, '');
+    const styleReq = requests.find(
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'NORMAL_TEXT'
+    );
+    expect(styleReq?.updateParagraphStyle?.paragraphStyle?.lineSpacing).toBe(115);
+    expect(styleReq?.updateParagraphStyle?.paragraphStyle?.spaceBelow).toEqual({ magnitude: 2, unit: 'PT' });
+    expect(styleReq?.updateParagraphStyle?.paragraphStyle?.spaceAbove).toEqual({ magnitude: 0, unit: 'PT' });
+    expect(styleReq?.updateParagraphStyle?.fields).toBe('namedStyleType,spaceAbove,spaceBelow,lineSpacing');
+  });
+
+  it('should apply 8pt spaceAbove for heading segments', () => {
+    const segments = parseMarkdown('## A Heading');
+    const { requests } = segmentsToBatchRequests(segments, 1, '');
+    const styleReq = requests.find(
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'NORMAL_TEXT'
+    );
+    expect(styleReq?.updateParagraphStyle?.paragraphStyle?.spaceAbove).toEqual({ magnitude: 8, unit: 'PT' });
+  });
+
+  it('should minimise blank line paragraph height with tight spacing', () => {
+    const segments = parseMarkdown('Line one\n\nLine two');
+    const { requests } = segmentsToBatchRequests(segments, 1, '');
+    // The blank-line updateParagraphStyle has no namedStyleType — only spacing fields
+    const blankStyle = requests.find(
+      (r) =>
+        r.updateParagraphStyle !== undefined &&
+        r.updateParagraphStyle.paragraphStyle.namedStyleType === undefined &&
+        r.updateParagraphStyle.paragraphStyle.lineSpacing === 100
+    );
+    expect(blankStyle).toBeDefined();
+    expect(blankStyle?.updateParagraphStyle?.paragraphStyle?.spaceAbove).toEqual({ magnitude: 0, unit: 'PT' });
+    expect(blankStyle?.updateParagraphStyle?.paragraphStyle?.spaceBelow).toEqual({ magnitude: 0, unit: 'PT' });
+    expect(blankStyle?.updateParagraphStyle?.fields).toBe('spaceAbove,spaceBelow,lineSpacing');
+  });
+
   it('should style idempotency marker as invisible (1pt white text)', () => {
     const segments = parseMarkdown('Hello');
     const { requests } = segmentsToBatchRequests(segments, 1, 'key');
