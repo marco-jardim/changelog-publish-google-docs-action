@@ -13,7 +13,6 @@ import {
 import {
   parseMarkdown,
   segmentsToBatchRequests,
-  enrichWithInsights,
 } from './markdown';
 import {
   getDocumentContent,
@@ -129,14 +128,10 @@ export async function run(): Promise<ActionOutputs> {
     core.debug(`Target document: ${documentUrl}`);
 
     // 3. Read report
-    let markdownContent = readReportFile(inputs.reportPath);
+    const markdownContent = readReportFile(inputs.reportPath);
 
-    // 4. Optionally enrich with insights
-    const insights = readInsights(inputs.insightsPath);
-    if (insights) {
-      markdownContent = enrichWithInsights(markdownContent, insights);
-      core.info('Enriched content with insights metadata');
-    }
+    // 4. Read insights (available for idempotency or future use, enrichment removed)
+    readInsights(inputs.insightsPath);
 
     // 5. Set up Google Auth (never log credentials)
     const credentials = decodeServiceAccountKey(inputs.serviceAccountKey);

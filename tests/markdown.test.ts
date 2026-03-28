@@ -132,22 +132,49 @@ describe('Markdown - segmentsToBatchRequests', () => {
     expect(firstInsert?.insertText?.text).toContain('[idempotency:repo:abc:def]');
   });
 
-  it('should apply HEADING_1 style for H1', () => {
+  it('should apply 16pt bold font for H1 via updateTextStyle', () => {
     const segments = parseMarkdown('# Big Title');
     const { requests } = segmentsToBatchRequests(segments, 1, '');
     const styleRequest = requests.find(
-      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_1'
+      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 16
     );
     expect(styleRequest).toBeDefined();
+    expect(styleRequest?.updateTextStyle?.textStyle?.bold).toBe(true);
   });
 
-  it('should apply HEADING_2 style for H2', () => {
+  it('should apply 13pt bold font for H2 via updateTextStyle', () => {
     const segments = parseMarkdown('## Section');
     const { requests } = segmentsToBatchRequests(segments, 1, '');
     const styleRequest = requests.find(
-      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_2'
+      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 13
     );
     expect(styleRequest).toBeDefined();
+    expect(styleRequest?.updateTextStyle?.textStyle?.bold).toBe(true);
+  });
+
+  it('should always apply NORMAL_TEXT paragraph style (never HEADING_X)', () => {
+    const segments = parseMarkdown('# Title\n## Sub\nParagraph');
+    const { requests } = segmentsToBatchRequests(segments, 1, '');
+    const headingParagraphStyle = requests.find(
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType?.startsWith('HEADING_')
+    );
+    expect(headingParagraphStyle).toBeUndefined();
+    const normalStyle = requests.find(
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'NORMAL_TEXT'
+    );
+    expect(normalStyle).toBeDefined();
+  });
+
+  it('should style idempotency marker as invisible (1pt white text)', () => {
+    const segments = parseMarkdown('Hello');
+    const { requests } = segmentsToBatchRequests(segments, 1, 'key');
+    const markerStyle = requests.find(
+      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 1
+    );
+    expect(markerStyle).toBeDefined();
+    expect(markerStyle?.updateTextStyle?.textStyle?.foregroundColor?.color?.rgbColor?.red).toBe(1);
+    expect(markerStyle?.updateTextStyle?.textStyle?.foregroundColor?.color?.rgbColor?.green).toBe(1);
+    expect(markerStyle?.updateTextStyle?.textStyle?.foregroundColor?.color?.rgbColor?.blue).toBe(1);
   });
 
   it('should create bullet formatting for list items', () => {

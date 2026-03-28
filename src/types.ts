@@ -113,6 +113,8 @@ export interface TextStyle {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  fontSize?: { magnitude: number; unit: string };
+  foregroundColor?: { color: { rgbColor: { red: number; green: number; blue: number } } };
 }
 
 export interface ParsedSegment {

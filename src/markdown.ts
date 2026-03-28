@@ -4,6 +4,7 @@ import type {
   ParsedSegment,
   DocsRequest,
   InsightsData,
+  TextStyle,
 } from './types';
 
 /**
@@ -130,7 +131,7 @@ export function segmentsToBatchRequests(
   let currentIndex = insertIndex;
   let totalCharsInserted = 0;
 
-  // Insert idempotency key as the very first line (invisible marker style)
+  // Insert idempotency key as the very first line (invisible marker)
   if (idempotencyKey) {
     const marker = `[idempotency:${idempotencyKey}]\n`;
     requests.push({
@@ -139,12 +140,15 @@ export function segmentsToBatchRequests(
         location: { index: currentIndex },
       },
     });
-    // Style as very small / hidden-ish text (paragraph style NORMAL_TEXT but we make it tiny)
+    // Hide the marker: 1pt white text makes it effectively invisible
     requests.push({
       updateTextStyle: {
         range: { startIndex: currentIndex, endIndex: currentIndex + marker.length - 1 },
-        textStyle: {},
-        fields: 'fontSize',
+        textStyle: {
+          fontSize: { magnitude: 1, unit: 'PT' },
+          foregroundColor: { color: { rgbColor: { red: 1, green: 1, blue: 1 } } },
+        },
+        fields: 'fontSize,foregroundColor',
       },
     });
     currentIndex += marker.length;
@@ -189,19 +193,31 @@ export function segmentsToBatchRequests(
       },
     });
 
-    // Apply paragraph style
-    const namedStyle = getNamedStyleType(segment.type);
-    if (namedStyle !== 'NORMAL_TEXT') {
+    // Always reset to NORMAL_TEXT so heading named styles don't produce enormous fonts
+    requests.push({
+      updateParagraphStyle: {
+        range: {
+          startIndex: segStartIndex,
+          endIndex: segStartIndex + text.length,
+        },
+        paragraphStyle: {
+          namedStyleType: 'NORMAL_TEXT',
+        },
+        fields: 'namedStyleType',
+      },
+    });
+
+    // For headings, apply explicit font size + bold via updateTextStyle
+    const headingStyle = getHeadingTextStyle(segment.type);
+    if (headingStyle) {
       requests.push({
-        updateParagraphStyle: {
+        updateTextStyle: {
           range: {
             startIndex: segStartIndex,
-            endIndex: segStartIndex + text.length,
+            endIndex: segStartIndex + text.length - 1,
           },
-          paragraphStyle: {
-            namedStyleType: namedStyle,
-          },
-          fields: 'namedStyleType',
+          textStyle: headingStyle.textStyle,
+          fields: headingStyle.fields,
         },
       });
     }
@@ -243,26 +259,26 @@ export function segmentsToBatchRequests(
 }
 
 /**
- * Maps segment type to Google Docs named style.
+ * Returns the explicit text style for a heading segment, or null for non-headings.
+ * Uses fixed pt sizes instead of Google's named heading styles to avoid enormous fonts.
  */
-function getNamedStyleType(
+function getHeadingTextStyle(
   type: ParsedSegment['type']
-): string {
+): { textStyle: TextStyle; fields: string } | null {
   switch (type) {
     case 'heading1':
-      return 'HEADING_1';
+      return { textStyle: { fontSize: { magnitude: 16, unit: 'PT' }, bold: true }, fields: 'fontSize,bold' };
     case 'heading2':
-      return 'HEADING_2';
+      return { textStyle: { fontSize: { magnitude: 13, unit: 'PT' }, bold: true }, fields: 'fontSize,bold' };
     case 'heading3':
-      return 'HEADING_3';
+      return { textStyle: { fontSize: { magnitude: 11, unit: 'PT' }, bold: true }, fields: 'fontSize,bold' };
     case 'heading4':
-      return 'HEADING_4';
-    case 'bullet':
-    case 'paragraph':
-    case 'hr':
-    case 'blank':
+      return {
+        textStyle: { fontSize: { magnitude: 10, unit: 'PT' }, bold: true, italic: true },
+        fields: 'fontSize,bold,italic',
+      };
     default:
-      return 'NORMAL_TEXT';
+      return null;
   }
 }
 
