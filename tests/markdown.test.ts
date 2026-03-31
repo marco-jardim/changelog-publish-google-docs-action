@@ -132,33 +132,45 @@ describe('Markdown - segmentsToBatchRequests', () => {
     expect(firstInsert?.insertText?.text).toContain('[idempotency:repo:abc:def]');
   });
 
-  it('should apply 16pt bold font for H1 via updateTextStyle', () => {
+  it('should apply HEADING_1 named style for H1 via updateParagraphStyle', () => {
     const segments = parseMarkdown('# Big Title');
     const { requests } = segmentsToBatchRequests(segments, 1, '');
     const styleRequest = requests.find(
-      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 16
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_1'
     );
     expect(styleRequest).toBeDefined();
-    expect(styleRequest?.updateTextStyle?.textStyle?.bold).toBe(true);
+    // No legacy font-size override via updateTextStyle
+    const fontSizeRequest = requests.find(
+      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 16
+    );
+    expect(fontSizeRequest).toBeUndefined();
   });
 
-  it('should apply 13pt bold font for H2 via updateTextStyle', () => {
+  it('should apply HEADING_2 named style for H2 via updateParagraphStyle', () => {
     const segments = parseMarkdown('## Section');
     const { requests } = segmentsToBatchRequests(segments, 1, '');
     const styleRequest = requests.find(
-      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 13
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_2'
     );
     expect(styleRequest).toBeDefined();
-    expect(styleRequest?.updateTextStyle?.textStyle?.bold).toBe(true);
+    // No legacy font-size override via updateTextStyle
+    const fontSizeRequest = requests.find(
+      (r) => r.updateTextStyle?.textStyle?.fontSize?.magnitude === 13
+    );
+    expect(fontSizeRequest).toBeUndefined();
   });
 
-  it('should always apply NORMAL_TEXT paragraph style (never HEADING_X)', () => {
+  it('should apply HEADING_X paragraph style for headings and NORMAL_TEXT for non-headings', () => {
     const segments = parseMarkdown('# Title\n## Sub\nParagraph');
     const { requests } = segmentsToBatchRequests(segments, 1, '');
-    const headingParagraphStyle = requests.find(
-      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType?.startsWith('HEADING_')
+    const h1Style = requests.find(
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_1'
     );
-    expect(headingParagraphStyle).toBeUndefined();
+    expect(h1Style).toBeDefined();
+    const h2Style = requests.find(
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_2'
+    );
+    expect(h2Style).toBeDefined();
     const normalStyle = requests.find(
       (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'NORMAL_TEXT'
     );
@@ -181,7 +193,7 @@ describe('Markdown - segmentsToBatchRequests', () => {
     const segments = parseMarkdown('## A Heading');
     const { requests } = segmentsToBatchRequests(segments, 1, '');
     const styleReq = requests.find(
-      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'NORMAL_TEXT'
+      (r) => r.updateParagraphStyle?.paragraphStyle?.namedStyleType === 'HEADING_2'
     );
     expect(styleReq?.updateParagraphStyle?.paragraphStyle?.spaceAbove).toEqual({ magnitude: 8, unit: 'PT' });
   });
