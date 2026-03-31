@@ -4,7 +4,6 @@ import type {
   ParsedSegment,
   DocsRequest,
   InsightsData,
-  TextStyle,
 } from './types';
 
 /**
@@ -208,8 +207,8 @@ export function segmentsToBatchRequests(
       },
     });
 
-    // Always reset to NORMAL_TEXT so heading named styles don't produce enormous fonts.
-    // Apply compact spacing: headings get a small gap above; all other segments use 0 above.
+    // Use the correct Google Docs named style for headings so the Document Outline
+    // and heading-based navigation work natively. Non-headings stay NORMAL_TEXT.
     const isHeading = ['heading1', 'heading2', 'heading3', 'heading4'].includes(segment.type);
     requests.push({
       updateParagraphStyle: {
@@ -218,7 +217,7 @@ export function segmentsToBatchRequests(
           endIndex: segStartIndex + text.length,
         },
         paragraphStyle: {
-          namedStyleType: 'NORMAL_TEXT',
+          namedStyleType: getNamedStyleType(segment.type),
           spaceAbove: { magnitude: isHeading ? 8 : 0, unit: 'PT' },
           spaceBelow: { magnitude: 2, unit: 'PT' },
           lineSpacing: 115,
@@ -226,21 +225,6 @@ export function segmentsToBatchRequests(
         fields: 'namedStyleType,spaceAbove,spaceBelow,lineSpacing',
       },
     });
-
-    // For headings, apply explicit font size + bold via updateTextStyle
-    const headingStyle = getHeadingTextStyle(segment.type);
-    if (headingStyle) {
-      requests.push({
-        updateTextStyle: {
-          range: {
-            startIndex: segStartIndex,
-            endIndex: segStartIndex + text.length - 1,
-          },
-          textStyle: headingStyle.textStyle,
-          fields: headingStyle.fields,
-        },
-      });
-    }
 
     // Apply bold ranges
     if (segment.boldRanges && segment.boldRanges.length > 0) {
@@ -279,26 +263,16 @@ export function segmentsToBatchRequests(
 }
 
 /**
- * Returns the explicit text style for a heading segment, or null for non-headings.
- * Uses fixed pt sizes instead of Google's named heading styles to avoid enormous fonts.
+ * Maps a segment type to the corresponding Google Docs named paragraph style.
+ * Headings map to HEADING_1–4 so the Document Outline and navigation work natively.
  */
-function getHeadingTextStyle(
-  type: ParsedSegment['type']
-): { textStyle: TextStyle; fields: string } | null {
+function getNamedStyleType(type: ParsedSegment['type']): string {
   switch (type) {
-    case 'heading1':
-      return { textStyle: { fontSize: { magnitude: 16, unit: 'PT' }, bold: true }, fields: 'fontSize,bold' };
-    case 'heading2':
-      return { textStyle: { fontSize: { magnitude: 13, unit: 'PT' }, bold: true }, fields: 'fontSize,bold' };
-    case 'heading3':
-      return { textStyle: { fontSize: { magnitude: 11, unit: 'PT' }, bold: true }, fields: 'fontSize,bold' };
-    case 'heading4':
-      return {
-        textStyle: { fontSize: { magnitude: 10, unit: 'PT' }, bold: true, italic: true },
-        fields: 'fontSize,bold,italic',
-      };
-    default:
-      return null;
+    case 'heading1': return 'HEADING_1';
+    case 'heading2': return 'HEADING_2';
+    case 'heading3': return 'HEADING_3';
+    case 'heading4': return 'HEADING_4';
+    default:         return 'NORMAL_TEXT';
   }
 }
 
